@@ -9,10 +9,7 @@ y_min = 20
 x_max = 190
 y_max = 200
 
-x_mid = (x_min + x_max) / 2
-y_mid = (y_min + y_max) / 2
-
-radius = 90
+radius = (x_max - (2 * x_min)) // 2
 
 WHITE = (0,0,0)
 PEN_COLOR = (255,255,255)
@@ -40,15 +37,26 @@ class plotter:
             self.dev = setup_pygame()
             self.move_to = self.pygame_move_to
             self.flush = self.pygame_flush
+            self.x_min = 0
+            self.y_min = 0
+            self.x_max = 190
+            self.y_max = 200
         elif 'silhouette' == dev_type:
             self.dev = setup_machine()
             self.move_to = self.silhouette_move_to
             self.flush = self.silhouette_flush
+            self.x_min = 0
+            self.y_min = 0
+            self.x_max = 480
+            self.y_max = 640
         else:
             raise Exception(f"Unknown dev type {dev_type}")
         self.pos = Point2D(0,0)
         self.home_pos = self.pos
         self.points = []
+
+    def get_dim(self):
+        return Point2D(self.x_max, self.y_max)
 
     def silhouette_move_to(self, target, pen_on):
         self.dev.move_to(target.x, target.y, pen_on)
@@ -66,7 +74,7 @@ class plotter:
         pygame.display.flip()
         running = True
         zoom_level = 1.0
-        zoom_change = 0.1
+        zoom_change = 0.2
         dragging = False
         last_drag_pos = Point2D(0,0)
         display_offset = Point2D(0,0)
@@ -111,7 +119,7 @@ class plotter:
                 if pen_on:
                     start = (pos + display_offset) * zoom_level
                     end   = (target + display_offset) * zoom_level
-                    thikness = int(max(1.0, zoom_level))
+                    thikness = int(max(1.0, (zoom_level//1.8)))
                     pygame.draw.line(temp_surface, PEN_COLOR, start.cartesian(),end.cartesian(), width=thikness)
                 pos = target
             self.dev.blit(pygame.transform.scale(temp_surface, (width, height)), (0,0))
@@ -126,17 +134,21 @@ class plotter:
 
 def make_circle_points(num_points, mid, r):
     step = (math.pi * 2) / num_points
-    print(f"Step is: {step}")
+    #print(f"Step is: {step}")
     points = []
     for i in range(num_points):
         x = math.cos(step * i) * r + mid[0]
         y = math.sin(step * i) * r + mid[1]
-        print(f"New point: {x}, {y}")
+        #print(f"New point: {x}, {y}")
         points.append(Point2D(x,y))
     return points
 
 def draw_symmetric_strings(dev_type="pygame"):
     dev = plotter(dev_type)
+    dim = dev.get_dim()
+    x_mid = dim.x // 2
+    y_mid = dim.y // 2
+    radius = min(x_mid, y_mid) - 40
     points = make_circle_points(197, (x_mid, y_mid), radius)
     dev.move_to(points[0], False)
     point_index = 0
@@ -144,7 +156,7 @@ def draw_symmetric_strings(dev_type="pygame"):
         point_index += 80
         point_index %= len(points)
         dev.move_to(points[point_index], True)
-        print(f"Moving to {point_index} ({points[point_index]})")
+        #print(f"Moving to {point_index} ({points[point_index]})")
     dev.move_home()
     dev.flush()
 
