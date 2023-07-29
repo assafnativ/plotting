@@ -1,6 +1,6 @@
 from py_silhouette import SilhouetteDevice
 import pygame
-from pygame.locals import QUIT, MOUSEBUTTONDOWN, MOUSEMOTION, VIDEORESIZE, MOUSEBUTTONUP
+from pygame.locals import QUIT, MOUSEBUTTONDOWN, MOUSEMOTION, VIDEORESIZE, MOUSEBUTTONUP, KEYDOWN
 import math
 from point2d import Point2D
 
@@ -105,6 +105,10 @@ class plotter:
                 elif event.type == MOUSEBUTTONUP:
                     if event.button == 1:
                         dragging = False
+                elif event.type == KEYDOWN:
+                    if event.key == pygame.K_s and event.mod & pygame.KMOD_CTRL:
+                        pygame.image.save(self.dev, "screenshot.png")
+                        print("Screenshot saved to screenshot.png")
                 elif event.type == VIDEORESIZE:
                     width, height = event.w, event.h
                     self.dev = pygame.display.set_mode((width, height), pygame.RESIZABLE)
@@ -159,6 +163,16 @@ def draw_symmetric_strings(dev_type="pygame"):
         #print(f"Moving to {point_index} ({points[point_index]})")
     dev.move_home()
     dev.flush()
+
+def draw_with_strings(dev_type='pygame'):
+    dev = plotter(dev_type)
+    dim = dev.get_dim()
+    x_mid = dim.x // 2
+    y_mid = dim.y // 2
+    radius = min(x_mid, y_mid) - 40
+    points = make_circle_points(197, (x_mid, y_mid), radius)
+    dev.move_to(points[0], False)
+
 
 draw_symmetric_strings(dev_type='pygame')
 
